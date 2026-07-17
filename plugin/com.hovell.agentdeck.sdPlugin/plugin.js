@@ -1167,18 +1167,77 @@ const hooks = new HookServer({
   gateTools: config.gateTools,
 });
 
+/**
+ * End a previous copy of this plugin that is still holding our port.
+ *
+ * Reinstalling from a file starts the new plugin process before OpenDeck has
+ * stopped the old one — and OpenDeck never closes the old WebSocket, so the old
+ * process has no idea it has been replaced. The new one dies on EADDRINUSE while
+ * the old one keeps the port and keeps answering /status. The deck looks alive
+ * and is running code OpenDeck no longer even lists as registered: an update
+ * that silently doesn't apply.
+ *
+ * So the newest instance wins — it is the one OpenDeck just launched. Only a
+ * process whose command line is this same plugin.js is ever touched; anything
+ * else holding the port (WSL's relay, say) is reported, not killed.
+ *
+ * @returns {Promise<boolean>} whether something was evicted
+ */
+function evictStaleInstance(port) {
+  return new Promise((resolve) => {
+    const ps = `
+$c = Get-NetTCPConnection -LocalPort ${port} -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+if (-not $c) { exit 0 }
+$p = Get-CimInstance Win32_Process -Filter "ProcessId = $($c.OwningProcess)" -ErrorAction SilentlyContinue
+if (-not $p) { exit 0 }
+if ($p.ProcessId -eq ${process.pid}) { exit 0 }
+if ($p.CommandLine -like '*com.hovell.agentdeck*plugin.js*') {
+  Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue
+  Write-Output "EVICTED $($p.ProcessId)"
+} else {
+  Write-Output "FOREIGN $($p.ProcessId) $($p.Name)"
+}`;
+    let out = '';
+    const proc = spawn('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], {
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    proc.stdout.on('data', (d) => (out += d));
+    proc.on('error', () => resolve(false));
+    proc.on('close', () => {
+      const m = out.trim();
+      if (m.startsWith('EVICTED')) {
+        log(`port ${port} was held by a previous instance (${m.split(' ')[1]}); it has been replaced`);
+        resolve(true);
+      } else {
+        if (m.startsWith('FOREIGN')) log(`port ${port} is held by ${m.slice(8)} — not ours, leaving it alone`);
+        resolve(false);
+      }
+    });
+  });
+}
+
 async function main() {
   log(`agent-deck starting (pid ${process.pid})`);
   try {
     await hooks.listen();
   } catch (err) {
-    if (err.code === 'EADDRINUSE') {
+    if (err.code !== 'EADDRINUSE') throw err;
+
+    // Most likely a stale copy of ourselves after a reinstall. Take the port back.
+    if (await evictStaleInstance(config.port)) {
+      await sleep(600); // let Windows release the socket
+      try {
+        await hooks.listen();
+      } catch (again) {
+        log(`FATAL: port ${config.port} still busy after evicting the old instance: ${again.code}`);
+        process.exit(1);
+      }
+    } else {
       // Worth spelling out: the deck goes dead with no on-device symptom, and
-      // the port is as likely to be some unrelated process (WSL's relay squats
-      // on 8787) as a second copy of us.
+      // the port may well be some unrelated process (WSL's relay squats on 8787).
       log(
-        `FATAL: port ${config.port} is already in use.\n` +
-          `  Something else holds it — find it with:\n` +
+        `FATAL: port ${config.port} is already in use by something that isn't us.\n` +
+          `  Find it with:\n` +
           `    Get-NetTCPConnection -LocalPort ${config.port} -State Listen | ` +
           `ForEach-Object { Get-Process -Id $_.OwningProcess }\n` +
           `  Then either free it, or set a different "port" in config.json\n` +
@@ -1186,7 +1245,6 @@ async function main() {
       );
       process.exit(1);
     }
-    throw err;
   }
   // Before the first paint: the VOICE key's face depends on the resolved mode.
   await resolveVoice();

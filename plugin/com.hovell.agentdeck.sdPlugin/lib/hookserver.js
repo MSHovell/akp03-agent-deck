@@ -38,15 +38,30 @@ export class HookServer {
     this.server = createServer((req, res) => this.#route(req, res));
   }
 
+  /**
+   * Retry-safe: each attempt registers exactly one pair of listeners and removes
+   * them both on settling. Passing the callback to `listen()` instead adds a
+   * 'listening' handler that a failed attempt never takes back, so a later
+   * successful bind fires every one it accumulated — and a second `once('error')`
+   * would pile up the same way. Callers do retry, after evicting a stale
+   * instance from the port.
+   */
   listen() {
     return new Promise((resolve, reject) => {
-      this.server.once('error', reject);
-      // Loopback only. This endpoint decides whether commands run — it must
-      // never be reachable from the network.
-      this.server.listen(this.port, '127.0.0.1', () => {
+      const onError = (err) => {
+        this.server.off('listening', onListening);
+        reject(err);
+      };
+      const onListening = () => {
+        this.server.off('error', onError);
         this.log(`hook server on http://127.0.0.1:${this.port}`);
         resolve();
-      });
+      };
+      this.server.once('error', onError);
+      this.server.once('listening', onListening);
+      // Loopback only. This endpoint decides whether commands run — it must
+      // never be reachable from the network.
+      this.server.listen(this.port, '127.0.0.1');
     });
   }
 
