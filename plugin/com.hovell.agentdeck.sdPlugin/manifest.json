@@ -1,17 +1,16 @@
 {
   "SDKVersion": 2,
   "Author": "Hovell",
-  "Name": "Agent Deck",
-  "Description": "Turn an Ajazz AKP03 into a physical control surface for Claude Code: approve or reject tool calls with a real key, watch agent state on the key art, dispatch prompts, scrub diffs with the knobs.",
+  "Name": "AKP03 Agent Deck",
+  "Description": "Turn an Ajazz AKP03 into a physical control surface for Claude Code on Windows: approve or reject tool calls with a real key, watch agent state on the key art, switch model and permission mode, dictate in Chinese. Windows only — the UI automation is built on Windows UI Automation.",
   "Version": "0.1.0",
   "Icon": "icons/category",
-  "Category": "Agent Deck",
+  "Category": "AKP03 Agent Deck",
   "CategoryIcon": "icons/category",
   "URL": "https://github.com/MSHovell/akp03-agent-deck",
   "Software": { "MinimumVersion": "6.0" },
   "OS": [
-    { "Platform": "windows", "MinimumVersion": "10" },
-    { "Platform": "mac", "MinimumVersion": "10.15" }
+    { "Platform": "windows", "MinimumVersion": "10" }
   ],
   "Nodejs": { "Version": "20" },
   "CodePath": "run.sh",
