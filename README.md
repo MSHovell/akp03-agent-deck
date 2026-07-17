@@ -1,45 +1,47 @@
 # AKP03 Agent Deck
 
-把 Ajazz AKP03 變成 Claude Code 的實體協作面板。
+*English ｜ [繁體中文](README.zh-TW.md)*
 
-不是「按鈕跑巨集」。是把 **permission prompt 從螢幕搬到實體鍵上**：Claude 要跑 `Bash` 之前，工具名和指令會印在鍵面上，`✓` 和 `✗` 亮起來，agent 停在那裡等你按。你按的那一下，就是那個 hook 的回傳值。
+Turn a cheap Ajazz AKP03 macro pad into a physical control surface for Claude Code.
+
+Not "buttons that run macros". This moves the **permission prompt off the screen and under your thumb**: before Claude runs `Bash`, the tool name and the command appear on the key face, `✓` and `✗` light up, and the agent waits. The key you press *is* the hook's return value.
 
 ```
-Claude Code ──PreToolUse hook (http)──> Agent Deck ──setImage──> AKP03 亮起
-                                             ▲                      │
-                                             └────── 你按 ✓ ────────┘
+Claude Code ──PreToolUse hook (http)──> Agent Deck ──setImage──> key lights up
+                                             ▲                         │
+                                             └────── you press ✓ ──────┘
                                              │
                     {"permissionDecision": "allow"}
                                              ▼
-                                        Claude 繼續跑
+                                     Claude carries on
 ```
 
-## 為什麼這能成立
+## Why this works at all
 
-三個查證過的事實撐起整個設計：
+Three verified facts hold the whole design up:
 
-1. **Claude Code 的 hook 支援 `type: "http"`** — hook 直接 POST 到我們的 daemon，不用包 shell script。
-2. **`PreToolUse` hook 可以回 `permissionDecision`**（`allow` / `deny` / `ask` / `defer`）——所以實體鍵能真的決定工具跑不跑。
-3. **command/http hook 預設 timeout 是 600 秒** — 阻塞著等人按實體鍵完全在預算內。
+1. **Claude Code hooks support `type: "http"`** — a hook POSTs straight to our daemon; no shell script wrapper.
+2. **`PreToolUse` hooks can return a `permissionDecision`** (`allow` / `deny` / `ask` / `defer`) — so a physical key really does decide whether a tool runs.
+3. **command/http hooks default to a 600s timeout** — blocking on a human pressing a button fits comfortably inside that.
 
-## 現況：實機驗證通過
+## Status: verified on real hardware
 
-2026-07-16 在 Windows 11 + Ajazz AKP03 (`0300:1001`) 上跑通。
+Working on Windows 11 + Ajazz AKP03 (`0300:1001`), 2026-07-16.
 
-| 項目 | 狀態 |
+| Thing | Status |
 |---|---|
-| AKP03 硬體辨識 | ✅ `kind: Akp03` — **Windows 這條路是通的** |
-| SVG 鍵面渲染 | ✅ 驅動回報 `Setting image for button 0..8` |
-| 工具名印在鍵上 | ✅ STATUS 鍵實測顯示 `Bash` |
-| **實體按鍵 → allow** | ✅ **按下去，Claude Code 收到 `permissionDecision: allow`** |
-| 三顆旋鈕綁定 | ✅ 全部掛上（UI 綁不上，寫 profile 可以）|
-| 旋鈕 K2 切換模型 | ✅ **實機確認**：轉開選單、移動、按下選定 |
-| 核心迴路合約測試 | ✅ 11 項全過（`npm test`）|
-| 語音鍵（中文） | ✅ ffmpeg + whisper.cpp 全本機。實測轉出「一、二、三、三、三、四」並成功注入 |
-| DISPATCH | ⚠️ 開新 headless run，非注入現有 session |
-| 多 session | ❌ **一次只服務一個** — 見下方 |
+| Device recognised | ✅ `kind: Akp03` — **the Windows path works** |
+| SVG key rendering | ✅ driver reports `Setting image for button 0..8` |
+| Tool name on the key | ✅ STATUS key shows `Bash` |
+| **Physical key → allow** | ✅ **press it, Claude Code receives `permissionDecision: allow`** |
+| All three knobs bound | ✅ (the UI can't bind encoders — writing the profile can) |
+| Model switching on K1 | ✅ **confirmed on hardware**: turn to open, move, press to pick |
+| Contract tests | ✅ 11/11 (`npm test`) |
+| Chinese dictation | ✅ ffmpeg + whisper.cpp, entirely local |
+| DISPATCH | ⚠️ spawns a headless run; doesn't inject into your session |
+| Multiple sessions | ❌ **one at a time** — see below |
 
-實測回傳：
+The actual response:
 
 ```json
 {
@@ -51,201 +53,201 @@ Claude Code ──PreToolUse hook (http)──> Agent Deck ──setImage──>
 }
 ```
 
-## 需要兩個 plugin，它們不重複
+## You need two plugins, and they are not duplicates
 
-很容易誤以為裝了 `opendeck-akp03` 就夠了 —— 名字裡就有你的機型。不夠：
+It is easy to assume `opendeck-akp03` is enough — it has your exact model in the name. It isn't:
 
-| Plugin | 角色 | Actions |
+| Plugin | Role | Actions |
 |---|---|---|
-| `st.lynx.plugins.opendeck-akp03` | **裝置驅動** —— 讓 OpenDeck 看得到硬體 | **`[]` 空的** |
-| `com.hovell.agentdeck` | **這個專案** —— APPROVE / DENY / STATUS / VOICE / SEND / 旋鈕 | 全部 |
+| `st.lynx.plugins.opendeck-akp03` | **device driver** — teaches OpenDeck to see the hardware | **`[]` — empty** |
+| `com.hovell.agentdeck` | **this project** — APPROVE / DENY / STATUS / VOICE / knobs | all of them |
 
-驅動的 manifest 裡 `"Actions": []`、`"DeviceNamespace": "n3"` —— 它只負責 HID 通訊，**一顆按鍵功能都沒有**。
+The driver's manifest literally says `"Actions": []` and `"DeviceNamespace": "n3"`. It does HID and nothing else.
 
-刪掉 `com.hovell.agentdeck` 的後果不只是鍵沒了：**OpenDeck 會把 profile 裡引用它的 9 顆鍵全部清成 `null`**，因為那些 action 已經無法解析。症狀看起來像「profile 莫名其妙被清空」，跟 plugin 完全無關。
+Deleting `com.hovell.agentdeck` costs more than the keys: **OpenDeck nulls out all 9 keys in the profile**, because their actions no longer resolve. The symptom looks like "my profile mysteriously emptied itself" and gives no hint that a plugin was involved.
 
-## 安裝
+## Install
 
-> ⚠️ **先關掉官方的 Stream Dock AJAZZ，包含開機自動啟動。** 兩套軟體會搶同一台裝置：
-> 旋鈕轉一格兩邊都反應，而它的 `switchAudio` 外掛預設就綁在旋鈕上。它裝在
-> `Program Files (x86)`，自動啟動在 `HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run`。
-> 移除自動啟動前記得備份那個值（本專案的 `docs/restore-streamdock-autostart.reg` 就是這麼來的）。
-> **代價**：官方軟體裡設好的按鍵配置就不會生效了，OpenDeck 會完全接管。
+### Prerequisites
+
+1. **OpenDeck** — https://github.com/nekename/OpenDeck/releases
+2. **opendeck-akp03** (the device driver) — https://github.com/4ndv/opendeck-akp03/releases
+   Unzip into `%APPDATA%\OpenDeck\plugins\`, then **launch OpenDeck once** so it creates the profiles and device id.
+3. Node ≥ 22. Optional, for Chinese dictation: `ffmpeg` and a `whisper.cpp` build.
+
+### Then
 
 ```powershell
-# 1. 確認裝置（會比對 PID 是否在 opendeck-akp03 支援清單內）
-npm run detect
-
-# 2. 產生圖示
-npm run icons
-
-# 3. 裝 OpenDeck 與 AKP03 驅動外掛
-#    OpenDeck:       https://github.com/nekename/OpenDeck/releases
-#    opendeck-akp03: https://github.com/4ndv/opendeck-akp03/releases
-#    驅動外掛解壓到 %APPDATA%\OpenDeck\plugins\
-#    先啟動 OpenDeck 一次，讓它建立 profiles 與 device id
-
-# 4. 掛上這個 plugin。用 junction 而非複製，改程式碼才會即時生效：
-New-Item -ItemType Junction `
-  -Path "$env:APPDATA\OpenDeck\plugins\com.hovell.agentdeck.sdPlugin" `
-  -Target "<repo>\plugin\com.hovell.agentdeck.sdPlugin"
-
-# 5. 設定（務必無 BOM — 見下方陷阱）
-copy-item plugin\com.hovell.agentdeck.sdPlugin\config.example.json `
-  plugin\com.hovell.agentdeck.sdPlugin\config.json
-
-# 6. 排好 6 顆鍵 + 3 顆旋鈕（OpenDeck 必須先關掉）
-node scripts/apply-profile.mjs --write
-
-# 7. 把 claude/settings.hooks.json 合併進 .claude/settings.json
+.\install.ps1 -DetectOnly   # see what it finds; changes nothing
+.\install.ps1               # install
 ```
 
-⚠️ opendeck-akp03 作者明講 Windows 端「未經測試，壞了自己修」。實測是通的，但這條風險不在我們的程式碼裡。
+It detects the device PID, a free port, your microphone's dshow GUID, whisper.cpp's binary and model, and any conflicting software — then writes `config.json`, installs the plugin, generates icons, applies the layout, and offers to install the Claude Code hooks.
 
-## 部署時踩到的坑
+**`config.json` is the only file that differs between machines, and every value in it is detected.** Moving to another PC is one command.
 
-全都是真的踩過、修過的，寫下來省下次的命：
+Working on the deck itself? `.\install.ps1 -Dev` links the plugin to the source tree instead of copying it.
 
-| 症狀 | 真正的原因 |
+> ⚠️ **Close the official Stream Dock AJAZZ software, autostart included.** Both drive the same HID device, so one knob turn does two things — its `switchAudio` plugin binds the knob to volume by default. It installs to `Program Files (x86)` (not `Program Files`) and registers under `HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run`. Back that registry value up before removing it. `install.ps1` detects and warns, but won't touch it for you.
+> **The cost:** any key layout you configured in the official software stops working. OpenDeck takes the device over completely.
+
+⚠️ opendeck-akp03's author states plainly that Windows is "untested, you're on your own". It works — but that risk isn't in this codebase.
+
+## Things that cost me a day
+
+Every one of these was hit, diagnosed, and fixed here. They share a shape: **the broken thing looked fine.**
+
+| Symptom | Actual cause |
 |---|---|
-| plugin 啟動即死 | **WSL 的 `wslrelay` 佔著 8787**。預設值已改 9317 |
-| 設定改了沒反應 | **PowerShell 5.1 `-Encoding utf8` 會加 BOM**，`JSON.parse` 直接爆。用 Node 寫檔 |
-| 重啟後 EADDRINUSE | OpenDeck 被殺時**不回收子程序**，孤兒抓著 port。已修：斷線即自殺 |
-| profile 寫了被清空 | `ActionContext` 序列化成 **`"Keypad.0.0"`**（三段），不是 `shared.rs` on main 寫的五段 |
-| 鍵面空白 | `setImage` 的 SVG **必須 base64**。用 `charset=utf8,`+`encodeURIComponent` 會被原樣存成不合法 XML |
-| 旋鈕綁不上 | OpenDeck UI 不給綁 encoder — **直接寫 profile 繞過** |
-| 旋鈕行為衝突、轉一格兩邊都反應 | **官方 Stream Dock AJAZZ 在背景執行，跟 OpenDeck 搶同一台裝置**。它的 `switchAudio` 外掛預設把旋鈕綁音量。裝在 `Program Files (x86)`（不是 `Program Files`），且註冊在 `HKCU\...\Run` 開機自動啟動 |
-| 文件說 `Ctrl+Shift+I` 開 model 選單 | **實際開了無痕對話，還把視窗帶離 Code 分頁**。桌面版的快捷鍵只在 Code 分頁成立，焦點不對時同一個組合鍵是別的功能。所以選單一律走 UIA，不送快捷鍵 |
+| Plugin dies on launch | **WSL's `wslrelay` squats on 8787.** Default is now 9317 |
+| Config changes do nothing | **PowerShell 5.1's `-Encoding utf8` writes a BOM**; `JSON.parse` throws; the catch silently falls back to defaults. Write JSON with Node |
+| EADDRINUSE after a restart | OpenDeck **doesn't reap its plugin processes**; the orphan still holds the port — and `/status` answers from the zombie, looking healthy. Fixed: exit when the host disconnects |
+| Profile written, then emptied | `ActionContext` serialises as **`"Keypad.0.0"`** — three parts. `shared.rs` on main shows a five-part form that v2.13.1 does not accept |
+| Blank key faces | `setImage` SVG **must be base64**. With `charset=utf8,` + `encodeURIComponent`, OpenDeck writes the percent-encoded text straight to a `.svg` file — not parseable XML |
+| Can't bind the encoders | OpenDeck's UI won't assign actions to encoder events — **write the profile JSON directly** |
+| Knobs do two things at once | The official Stream Dock software is running in the background, fighting for the device |
+| Docs say `Ctrl+Shift+I` opens the model menu | **It opened an incognito Chat and navigated the window off the Code tab.** Desktop shortcuts only hold in the Code tab; the same chord means something else elsewhere. Hence: menus via UIA, never blind keystrokes |
+| A knob "does nothing" | `Expand()` on an already-expanded menu throws `InvalidOperationException` — and a knob fires ticks faster than a script runs. Make it idempotent |
+| Number keys don't reach dialogs | A CJK IME rewrites them: `2` arrives as `ㄉ` |
 
-## 先跑跑看，不用硬體
+And the one that made all the others harder to find: **PowerShell wrote its errors in the OEM code page** while Node read them as UTF-8, so every localised .NET exception arrived as mojibake. I stared at `嚙瘡 "0" 嚙豬數呼嚙編 "Expand"` and guessed wrong. Fixing the encoding surfaced the real message immediately.
+
+> When your debugging tools are broken, you're not debugging. You're guessing.
+
+## Try it without the hardware
 
 ```bash
 npm run console
 ```
 
-你的鍵盤就是 AKP03（`a` 批准 / `d` 拒絕 / `i` 中斷）。把 hooks 設好，然後在另一個終端機叫 Claude Code 跑個 `Bash`——請求會出現在 console。**這條通道能通，硬體那段才有意義。**
+Your keyboard becomes the deck (`a` approve / `d` deny / `i` interrupt). Point the hooks at it, run Claude Code in another terminal, trigger a `Bash` call — the request shows up in the console. **If that loop doesn't work, the hardware won't save you.**
 
-## 兩個必須守住的約束
+## Two invariants
 
-**1. Timeout 有方向性。**
-
-```
-plugin config.json     approvalTimeoutMs: 90000  ← 必須比較小
-.claude/settings.json  PreToolUse timeout: 120   ← 必須比較大
-```
-
-Plugin 一定要先放棄。它先放棄 → 回 `defer` → 你拿到正常的螢幕提示。Claude Code 先放棄 → 你拿到 hook 錯誤。
-
-**2. 所有失敗路徑都回 `defer`。**
-
-裝置沒插、plugin 崩了、body 壞了、逾時、被新的呼叫取代 —— 全部回 `defer`，交還給 Claude Code 原本的權限流程。這有測試守著。
-
-> 一個沉默卡住 10 分鐘的 agent，比一個彈出螢幕提示的 agent 糟糕得多。
-
-## 這台裝置一次只服務一個 session
-
-狀態機只有**一個** pending 欄位。第二個 session 送來批准請求時，第一個會被擠成 `defer`。
-
-這是刻意的 —— 不這樣做，舊的請求會永遠掛著。但代價很實際：**全域掛 hook 又同時開很多 session，它們會互相踩，結果是什麼都過不了**，而且畫面上完全看不出原因。
-
-實務建議：**把 hooks 放在你真正需要它的那個專案的 `.claude/settings.json`**，而不是 `~/.claude/settings.json`。想全域也行，但要知道這個限制。
-
-（DISPATCH 派出去的 run 帶 `--settings '{"hooks":{}}'`，所以不算在內 —— 否則它會卡在等一個沒人看得到的批准。）
-
-## 語音鍵
-
-三種模式。選哪個取決於**你講什麼語言** —— 因為 Claude Code 內建的聽寫只支援英文。
-
-### `local` 模式（中文用這個，預設）
-
-**Claude Code 的聽寫不支援中文。** 不是設定問題，是功能沒有：
-
-> `/voice` 會顯示 **"zh-CN" is not a supported dictation language; using English.**
-
-官方支援清單 20 種語言（英日韓法德…）**沒有中文**，已有 [feature request #42920](https://github.com/anthropics/claude-code/issues/42920) 開著。（諷刺的是 Claude 的一般語音模式 2026/6 就支援 18 語含中文了，就是 Claude Code 沒有。）
-
-所以中文只能自己來。全程在本機，**音訊不離開你的電腦**：
+**1. The timeout has a direction.**
 
 ```
-按 VOICE → ffmpeg 錄音 → whisper.cpp 轉中文 → UIA 聚焦輸入框 → 貼上
+plugin config.json     approvalTimeoutMs: 90000  ← must be smaller
+.claude/settings.json  PreToolUse timeout: 120   ← must be larger
 ```
 
-需要 **ffmpeg** 和一個 **whisper.cpp build + 模型**。實測環境：`large-v3-turbo`（1.6GB），11 秒音檔約 3.7 秒轉完（含 1.4 秒載入模型）。
+The plugin has to give up first. It gives up → answers `defer` → you get the normal on-screen prompt. If Claude Code gives up first, you get a hook error instead.
 
-三個實作上的坑，都是踩過才知道的：
+**2. Every failure path answers `defer`.**
 
-| 坑 | 解法 |
+Device unplugged, plugin crashed, malformed body, timeout, superseded by a newer call — all `defer`, handing the decision back to Claude Code's own permission flow. Tests enforce this.
+
+> An agent that hangs silently for ten minutes is far worse than an agent that shows a prompt.
+
+## One session at a time
+
+The state machine has **one** pending slot. When a second session asks for approval, the first is deferred.
+
+That's deliberate — otherwise stale requests hang forever. But the cost is real: **install the hooks globally, run several sessions, and they defer each other with nothing on screen to explain why.**
+
+Put the hooks in the `.claude/settings.json` of the project that needs them, not `~/.claude/settings.json`. Global works, as long as you know this.
+
+(DISPATCH's headless runs pass `--settings '{"hooks":{}}'` so they're exempt — otherwise they'd block on an approval nobody can see.)
+
+## Voice
+
+Three modes. Which one you want depends on **what language you speak**, because Claude Code's built-in dictation is English-only.
+
+### `local` (default — the only one that speaks Chinese)
+
+**Claude Code's dictation does not support Chinese.** Not a setting — the feature isn't there:
+
+> `/voice` prints **"zh-CN" is not a supported dictation language; using English.**
+
+The supported list has 20 languages (English, Japanese, Korean, French, German…) and **no Chinese**. There's an open [feature request](https://github.com/anthropics/claude-code/issues/42920). (Claude's general voice mode has supported 18 languages including Chinese since June 2026. Claude Code just doesn't.)
+
+So Chinese has to be done locally. **Audio never leaves the machine:**
+
+```
+press VOICE → ffmpeg records → whisper.cpp transcribes → UIA focuses the composer → paste
+```
+
+Needs **ffmpeg** and a **whisper.cpp build + model**. Tested with `large-v3-turbo` (1.6 GB): 11 seconds of audio in ~3.7s, including 1.4s of model load.
+
+Three implementation traps:
+
+| Trap | Fix |
 |---|---|
-| 殺掉 ffmpeg 會讓 WAV 的表頭 size 欄位沒寫完，whisper 讀到空檔 | **往 stdin 寫 `q`** 讓它自己收尾。所以 ffmpeg 由 Node 直接 spawn（Node 才握著那個 pipe） |
-| 麥克風的友善名稱是中文，穿過 shell 會被搞爛 | 用 `@device_cm_` **GUID**，純 ASCII |
-| 輸入框是 contenteditable，UIA 只給 `TextPattern`（唯讀），**沒有 ValuePattern** | 只能剪貼簿 + `Ctrl+V`。用 UIA `SetFocus()` 先聚焦，貼完**還原剪貼簿**（純文字；圖片/檔案不保留）|
+| Killing ffmpeg leaves the WAV header's size fields unwritten; whisper reads an empty file | **Write `q` to its stdin** so it finalises. Which is why Node spawns ffmpeg directly — Node holds that pipe |
+| The mic's friendly name is often non-ASCII and gets mangled crossing shells | Use the `@device_cm_` **GUID** — pure ASCII |
+| The composer is a contenteditable: UIA exposes only `TextPattern` (read-only), **no ValuePattern** | Clipboard + `Ctrl+V`, with UIA `SetFocus()` first, and **restore the clipboard** afterwards (text only; images/files aren't preserved) |
 
-`autoSubmit` 預設 `false` —— 轉寫結果先留在輸入框給你看過再送。STT 對專有名詞和程式術語常出錯，直接送出會讓你花更多時間收拾。
+`autoSubmit` defaults to `false` — the transcript lands in the composer for you to read first. STT mangles names and code terms; sending blind costs more time than it saves.
 
-鍵有三個狀態，**全部是真的，沒有一個是猜的**：`VOICE` → `REC`（紅）→ `HEARING`（whisper 工作中）。中間那個 `HEARING` 是必要的 —— whisper 要跑好幾秒，鍵如果在那段時間變暗，會讓人以為按壞了。
+The key has three states, **all real, none guessed**: `VOICE` → `REC` (red) → `HEARING` (whisper working). That middle one matters: whisper takes seconds, and a key that goes dark reads as a dropped press.
 
-### `gui` 模式（Claude Code 桌面版內建聽寫，英文）
+### `gui` (Claude Code Desktop's own dictation, English)
 
-**桌面版沒有麥克風的鍵盤快捷鍵。** `Ctrl+/` 的完整清單裡沒有 voice/mic 任何一項，文件也零次提及，而 CLI 的 `voice:pushToTalk` 綁定明確不適用於桌面版（"terminal-based interactive mode shortcuts do not apply in Desktop"）。所以沒有按鍵可以送。
+**The desktop app has no keyboard shortcut for the microphone.** The `Ctrl+/` list has no voice entry, the docs never mention one, and the CLI's `voice:pushToTalk` binding explicitly doesn't apply ("terminal-based interactive mode shortcuts do not apply in Desktop"). There is no key to send.
 
-改用 **Windows UI Automation** 直接操作那顆按鈕（`lib/mic.ps1`）—— 用**無障礙名稱**定位，不是座標。視窗移動、DPI 改變、版面調整都不會壞。
+So it drives the button itself via **UI Automation** (`lib/mic.ps1`), located by **accessible name**, not coordinates — surviving window moves, DPI changes and layout shifts.
 
-零設定。`"voice": { "mode": "gui" }` 就是預設值。
+Three behaviours found by probing (Claude v1.21459.3):
 
-實測時挖出的三個行為（Claude v1.21459.3）：
-
-| 行為 | 影響 |
+| Behaviour | Consequence |
 |---|---|
-| 按鈕雖標示 "Press and hold to record"，但暴露的是 **TogglePattern** | 切一次開始、切一次停止，**不用按住** |
-| 按鈕**會隨狀態改名**：`Press and hold to record` ↔ `Stop dictation` | 只找一個名字，錄音一開始就失聯 |
-| 改名後**舊的元素參照會靜默失效** —— `Toggle()` 不報錯也不生效 | 每次都必須重新用名字找 |
+| Labelled "Press and hold to record", but exposes a **TogglePattern** | Toggle to start, toggle to stop. **No holding needed** |
+| The button **renames itself**: `Press and hold to record` ↔ `Stop dictation` | Match one name and you lose it the moment recording starts |
+| After the rename, a stale reference's `Toggle()` **fails silently** — no error, no effect | Re-find it by name every single time |
 
-還有一個 Chromium 的坑：它**只有在 UIA client 來問的時候才建立無障礙樹**，第一次查詢一定是空的（那次查詢本身就是喚醒動作）。`mic.ps1` 會重試四次。
+Plus a Chromium quirk: it **builds its accessibility tree lazily, only once a UIA client asks**. The first query always comes back empty — that query is the wake-up. `mic.ps1` retries four times.
 
-**這是整組鍵裡唯一有真實回饋的一顆**：`TogglePattern` 會回報 `ToggleState`，所以 REC 是真的讀數。plugin 在錄音時每 2 秒輪詢，抓 Claude 因靜音自己停止的時刻。
+This is the one key with a real feedback source: `TogglePattern` reports `ToggleState`, so `REC` is a readout. The plugin polls it while recording to catch Claude stopping on its own.
 
-### `cli` 模式（終端機版）
-
-```
-/voice tap                                   # 必須 tap，hold 送不出去
-"voice": { "mode": "cli", "key": "{SPACE}" } # 對上 voice:pushToTalk 綁定
-```
-
-`key` 是 SendKeys 語法。改綁 `ctrl+shift+v` 就填 `"^+v"`：
-
-```json
-{ "bindings": [ { "context": "Chat", "bindings": { "ctrl+shift+v": "voice:pushToTalk" } } ] }
-```
-
-### `gui` / `cli` 共同前提
-
-- **需要 Claude.ai 帳號** —— API key / Bedrock / Vertex 沒有這功能
-- **英文限定**。文件裡「Chinese transcripts count individual words」那句講的是**沒有空格的語言怎麼算字數**（自動送出的門檻），不是說聽得懂中文。我被這句誤導過，寫在這裡免得下次再上當。
-
-## 結構
+### `cli` (terminal Claude Code, English)
 
 ```
+/voice tap                                   # must be tap; hold can't be sent
+"voice": { "mode": "cli", "key": "{SPACE}" } # match your voice:pushToTalk binding
+```
+
+`key` is SendKeys syntax. Rebound to `ctrl+shift+v`? Use `"^+v"`.
+
+### `gui` / `cli` caveats
+
+- **Requires a Claude.ai account** — not available with an API key, Bedrock or Vertex.
+- **English only.** The docs' line about "Chinese transcripts count individual words" is about *word counting for languages without spaces* (the auto-submit threshold), not comprehension. It misled me; noting it here so it doesn't mislead you.
+
+## Layout
+
+See [docs/LAYOUT.md](docs/LAYOUT.md) (Chinese) — including why `✓` and `✗` are a full key apart.
+
+## Structure
+
+```
+install.ps1            detect-everything installer — the one command per machine
 plugin/com.hovell.agentdeck.sdPlugin/
-  manifest.json        8 個 action（7 keypad + 1 encoder）
-  plugin.js            接線：事件 → 狀態 → 重繪
-  lib/state.js         狀態機。不認識 OpenDeck 也不認識 HTTP
-  lib/hookserver.js    Claude Code hook 端點。defer 邏輯在這
-  lib/opendeck.js      Elgato protocol WS client
-  lib/icons.js         鍵面 SVG。狀態改變 = 換一個字串
+  manifest.json        12 actions (11 keypad + 1 encoder)
+  plugin.js            wiring: events → state → redraw
+  lib/state.js         the state machine. Knows nothing of OpenDeck or HTTP
+  lib/hookserver.js    Claude Code hook endpoints. The defer logic lives here
+  lib/opendeck.js      Elgato-protocol WebSocket client
+  lib/icons.js         key art as SVG. A state change is just a different string
+  lib/keycaps.js       28 swappable keycap faces (the picker imports this too)
+  lib/host.ps1         resident UIA host — one process for all UI automation
+  lib/{mic,menu,paste,submit}.ps1   one-shot UIA actions
 scripts/
-  gen-icons.mjs        自幹的 PNG 編碼器 + 距離場光柵化（零依賴）
-  apply-profile.mjs    把 LAYOUT.md 寫進 OpenDeck profile，含旋鈕
-  dev-console.mjs      無硬體測試通道
-  detect-device.ps1    PID 偵測 + 對照支援清單
-tests/loop.test.mjs    合約測試，重點在失敗路徑
+  gen-icons.mjs        hand-rolled PNG encoder + distance-field rasteriser
+  apply-profile.mjs    writes the layout into an OpenDeck profile, encoders too
+  dev-console.mjs      the whole loop, no hardware
+  detect-device.ps1    PID detection against the supported list
+  probe-controls.ps1   probe Claude Code's UI tree when something can't be found
+tests/loop.test.mjs    contract tests, aimed at the failure paths
 ```
 
-零 npm 依賴。Node 22+ 內建 `WebSocket`，`zlib` 產 PNG，`http` 收 hook。
+**Zero npm dependencies.** Node 22+ gives `WebSocket` natively, `zlib` makes the PNGs, `http` receives the hooks.
 
-## 佈局
+## Credits
 
-見 [docs/LAYOUT.md](docs/LAYOUT.md) — 以及為什麼 `✓` 和 `✗` 中間隔了一整顆鍵。
+- [OpenDeck](https://github.com/nekename/OpenDeck) by nekename — the host this plugs into
+- [opendeck-akp03](https://github.com/4ndv/opendeck-akp03) by Andrey Viktorov — the device driver that makes the AKP03 visible at all
+- [whisper.cpp](https://github.com/ggerganov/whisper.cpp) by Georgi Gerganov — local transcription
 
-## 授權
+## License
 
 MIT
