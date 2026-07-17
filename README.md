@@ -106,16 +106,20 @@ Deleting `com.hovell.agentdeck` costs more than the keys: **OpenDeck nulls out a
    Unzip into `%APPDATA%\OpenDeck\plugins\`, then **launch OpenDeck once** so it creates the profiles and device id.
 3. Node ≥ 22. Optional, for Chinese dictation: `ffmpeg` and a `whisper.cpp` build.
 
-### Then
+### Then, either
+
+**Install the plugin file** — [download the latest `.plugin.zip`](https://github.com/MSHovell/akp03-agent-deck/releases/latest) and use OpenDeck's **Plugins → Install from file**. Drag the actions onto keys yourself. The plugin works out its own configuration on first run.
+
+**Or clone and run the installer**, which also arranges the keys and the hooks for you:
 
 ```powershell
 .\install.ps1 -DetectOnly   # see what it finds; changes nothing
 .\install.ps1               # install
 ```
 
-It detects the device PID, a free port, your microphone's dshow GUID, whisper.cpp's binary and model, and any conflicting software — then writes `config.json`, installs the plugin, generates icons, applies the layout, and offers to install the Claude Code hooks.
+It detects the device PID, a free port, and any conflicting software, then installs the plugin, generates icons, applies the layout from [docs/LAYOUT.md](docs/LAYOUT.md), and offers to install the Claude Code hooks.
 
-**`config.json` is the only file that differs between machines, and every value in it is detected.** Moving to another PC is one command.
+Either way, **`config.json` is the only file that differs between machines, and every value in it is detected** — the plugin writes it itself on first run. Moving to another PC installs nothing by hand.
 
 Working on the deck itself? `.\install.ps1 -Dev` links the plugin to the source tree instead of copying it.
 

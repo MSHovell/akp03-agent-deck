@@ -96,16 +96,20 @@ Claude Code ──PreToolUse hook (http)──> Agent Deck ──setImage──>
 2. **opendeck-akp03**（裝置驅動）—— https://github.com/4ndv/opendeck-akp03/releases
    解壓到 `%APPDATA%\OpenDeck\plugins\`，然後**先啟動 OpenDeck 一次**讓它建立 profiles 與 device id
 
-### 然後跑安裝腳本
+### 然後二選一
+
+**裝 plugin 檔** —— [下載最新的 `.plugin.zip`](https://github.com/MSHovell/akp03-agent-deck/releases/latest)，用 OpenDeck 的 **Plugins → Install from file**。action 自己拖到鍵上。**plugin 首次啟動會自己算出設定。**
+
+**或 clone 下來跑安裝腳本**，它會連按鍵佈局和 hooks 一起弄好：
 
 ```powershell
 .\install.ps1 -DetectOnly   # 先看它偵測到什麼，不會動任何東西
 .\install.ps1               # 安裝
 ```
 
-它會偵測：裝置 PID、空閒 port、麥克風的 dshow GUID、whisper.cpp 路徑與模型、Stream Dock 衝突 —— 然後產生 `config.json`、裝 plugin、產圖示、套用佈局、問你要不要裝 hooks。
+它會偵測裝置 PID、空閒 port、Stream Dock 衝突，然後裝 plugin、產圖示、套用 [docs/LAYOUT.md](docs/LAYOUT.md) 的佈局、問你要不要裝 hooks。
 
-**`config.json` 是唯一在每台機器上不同的檔案，而它的每一個值都是偵測出來的。** 換電腦就是重跑這一支。
+兩條路都一樣：**`config.json` 是唯一在每台機器上不同的檔案，而它的每一個值都是偵測出來的** —— plugin 首次啟動自己寫。換電腦不用手動設定任何東西。
 
 改這個專案本身的話用 `.\install.ps1 -Dev` —— 它會建 junction 而不是複製，改程式碼重啟 OpenDeck 就生效。
 

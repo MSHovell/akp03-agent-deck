@@ -32,6 +32,7 @@
   "scripts": {
     "test": "node --test tests/loop.test.mjs tests/detect.test.mjs",
     "install-deck": "powershell -ExecutionPolicy Bypass -File install.ps1",
+    "package": "node scripts/gen-icons.mjs && node scripts/package.mjs && node scripts/verify-package.mjs",
     "icons": "node scripts/gen-icons.mjs",
     "profile": "node scripts/apply-profile.mjs",
     "console": "node scripts/dev-console.mjs",

@@ -26,6 +26,9 @@ scripts/publish-manual.mjs
 # an autostart entry to HKCU\...\Run — not something to hand a stranger.
 docs/restore-streamdock-autostart.reg
 
+# Build output. `npm run package` rebuilds it; releases carry it.
+*.plugin.zip
+
 # Zero npm dependencies, but keep this honest anyway.
 node_modules/
 package-lock.json
