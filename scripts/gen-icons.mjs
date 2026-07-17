@@ -195,4 +195,15 @@ for (const [name, layers] of Object.entries(ICONS)) {
   writeFileSync(join(OUT, `${name}-key.png`), encodePng(render(layers, 72), 72, 72));
 }
 
+// The marketplace catalogue wants a high-resolution icon named for the bundle
+// id, and lives outside the plugin dir — it is submitted to another repo, not
+// shipped in the zip.
+const CATALOGUE = join(OUT, '..', '..', '..', 'docs', 'art');
+mkdirSync(CATALOGUE, { recursive: true });
+writeFileSync(
+  join(CATALOGUE, 'com.hovell.agentdeck.png'),
+  encodePng(render(ICONS.category, 256), 256, 256),
+);
+
 console.log(`wrote ${Object.keys(ICONS).length * 3} icons to ${OUT}`);
+console.log(`wrote docs/art/com.hovell.agentdeck.png (256px, for the catalogue)`);
