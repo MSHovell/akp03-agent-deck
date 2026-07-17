@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
-import { appendFileSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { OpenDeckClient } from './lib/opendeck.js';
 import { HookServer } from './lib/hookserver.js';
 import { AgentDeck, State } from './lib/state.js';
+import { detectVoice } from './lib/detect.js';
 import * as icons from './lib/icons.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -59,26 +60,30 @@ function loadConfig() {
     approvalTimeoutMs: 90_000,
     gateTools: ['Bash', 'Write', 'Edit', 'NotebookEdit'],
     claudeBin: 'claude',
-    // The VOICE key. Three modes, because Claude Code's own dictation is
-    // English-only — it rejects zh-CN outright ("not a supported dictation
-    // language; using English"), so a Chinese speaker needs "local".
+    // The VOICE key.
     //
-    //   "local" — record with ffmpeg, transcribe with whisper.cpp, paste the
-    //             text into the composer. The only mode that speaks Chinese.
+    //   "auto"  — pick per machine on first run. See lib/detect.js.
     //   "gui"   — Claude Code Desktop's own dictation button, toggled through UI
-    //             Automation (lib/mic.ps1). English only.
+    //             Automation (lib/mic.ps1). Zero dependencies. Its 20 languages.
+    //   "local" — record with ffmpeg, transcribe with whisper.cpp, paste the
+    //             text in. The only mode that speaks Chinese — and the only one
+    //             that needs anything installed.
     //   "cli"   — terminal Claude Code: taps `key` at the focused window.
-    //             Needs `/voice tap`. English only.
+    //             Needs `/voice tap`.
+    //
+    // "auto", not "local": local was built for Chinese, but as a default it made
+    // everyone else's VOICE key flash red for want of a 1.6GB model they never
+    // needed — Claude Code already dictates their language.
     voice: {
-      mode: 'local',
+      mode: 'auto',
       key: '{SPACE}',
-      // ffmpeg dshow device. Prefer the @device_cm_ GUID over the friendly
-      // name: the friendly name here is Chinese, and non-ASCII argv gets
-      // mangled crossing shell boundaries.
+      // Filled in by detection when mode resolves to "local". The @device_cm_
+      // GUID, not the friendly name: friendly names are routinely non-ASCII and
+      // get mangled crossing shell boundaries.
       device: null,
       whisperBin: null,
       whisperModel: null,
-      language: 'zh',
+      language: null,
       threads: 8,
       autoSubmit: false,
       maxSeconds: 120,
@@ -89,7 +94,7 @@ function loadConfig() {
   try {
     raw = readFileSync(join(HERE, 'config.json'), 'utf8');
   } catch {
-    log('no config.json; using defaults');
+    log('no config.json — first run; will detect and write one');
     return defaults;
   }
 
@@ -97,7 +102,10 @@ function loadConfig() {
     // Strip a UTF-8 BOM. PowerShell 5.1's `Set-Content -Encoding utf8` writes
     // one, and JSON.parse rejects it — which used to fall through to the catch
     // below and silently run on defaults.
-    return { ...defaults, ...JSON.parse(raw.replace(/^﻿/, '')) };
+    const user = JSON.parse(raw.replace(/^﻿/, ''));
+    // Merge `voice` one level deep. A shallow spread would let a partial
+    // `"voice": { "mode": "local" }` wipe out threads, maxSeconds and the rest.
+    return { ...defaults, ...user, voice: { ...defaults.voice, ...(user.voice ?? {}) } };
   } catch (err) {
     // Loud on purpose. Silently ignoring a broken config means the deck gates
     // the wrong tools on the wrong port, with nothing on screen to explain it.
@@ -107,6 +115,29 @@ function loadConfig() {
 }
 
 const config = loadConfig();
+
+/**
+ * Resolve `voice.mode: "auto"` against this machine, and persist the answer.
+ *
+ * Written back to config.json rather than re-detected each launch, for three
+ * reasons: spawning ffmpeg on every start is waste; the file is where someone
+ * looks to find out what the plugin decided; and it is where they override it.
+ */
+async function resolveVoice() {
+  if (config.voice.mode !== 'auto' && existsSync(join(HERE, 'config.json'))) return;
+
+  const detected = await detectVoice(config.voice.mode, log);
+  Object.assign(config.voice, detected);
+
+  try {
+    writeFileSync(join(HERE, 'config.json'), JSON.stringify(config, null, 2) + '\n', 'utf8');
+    log(`config.json written (voice.mode = ${config.voice.mode})`);
+  } catch (err) {
+    // Not fatal: we have the answer in memory, it just costs a detection next
+    // launch. Read-only install dirs are a real possibility.
+    log(`could not write config.json (${err.message}); detection will repeat next launch`);
+  }
+}
 
 const deck = new AgentDeck({ log });
 const client = new OpenDeckClient({ log });
@@ -1157,13 +1188,15 @@ async function main() {
     }
     throw err;
   }
+  // Before the first paint: the VOICE key's face depends on the resolved mode.
+  await resolveVoice();
   await client.connect();
   render();
   // Warm the UIA host now: its first command pays a ~400ms tree walk, and that
   // should not land on the user's first knob turn.
   startHost().then(() => ps('scroll-pct')).catch(() => {});
   startUsagePolling();
-  log(`ready — gating ${[...hooks.gateTools].join(', ')}`);
+  log(`ready — voice=${config.voice.mode}, gating ${[...hooks.gateTools].join(', ')}`);
 }
 
 main().catch((err) => {

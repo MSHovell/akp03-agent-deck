@@ -1,7 +1,5 @@
 {
-  "_comment": "The shape of config.json. You do NOT need to fill this in by hand — install.ps1 detects everything below and writes config.json for you. Copy this only if you want to configure it manually.",
-
-  "_null_fields": "device / whisperBin / whisperModel are null because they are different on every machine. The plugin refuses to use them until they are set, rather than guessing.",
+  "_comment": "The shape of config.json. You do NOT need this file: on first run the plugin detects everything and writes config.json itself. Read that file to see what it decided; edit it to override. This is here to document what the fields mean.",
 
   "_port": "Must match the hook URLs in .claude/settings.json. Avoid 8787 — WSL's port relay commonly squats on it.",
   "port": 9317,
@@ -14,22 +12,24 @@
 
   "claudeBin": "claude",
 
-  "_voice_mode": "\"local\" = ffmpeg records, whisper.cpp transcribes, the text is pasted into the composer. THE ONLY MODE THAT SPEAKS CHINESE — Claude Code's built-in dictation is English-only and rejects zh-CN outright. Audio never leaves the machine. || \"gui\" = Claude Code Desktop's own dictation button, toggled via UI Automation (lib/mic.ps1); the desktop app has NO keyboard shortcut for the mic. English only. || \"cli\" = terminal Claude Code: taps `key` at the focused window, needs /voice tap. English only.",
+  "_voice_mode": "\"auto\" (default) picks per machine on first run and writes the answer here. || \"gui\" = Claude Code Desktop's own dictation button, driven via UI Automation. NEEDS NOTHING INSTALLED, and covers Claude Code's 20 languages. || \"local\" = ffmpeg records, whisper.cpp transcribes, the text is pasted in. The only mode that speaks Chinese — and the only one that needs ffmpeg + a whisper.cpp build + a model. Audio never leaves the machine. || \"cli\" = terminal Claude Code: taps `key` at the focused window; needs /voice tap.",
 
-  "_voice_device": "ffmpeg dshow device — machine-specific, detected by install.ps1. To find it yourself: `ffmpeg -list_devices true -f dshow -i dummy`. PREFER the @device_cm_ GUID over the friendly name: friendly names are often non-ASCII and get mangled crossing shell boundaries. The backslash must be escaped as \\\\ in JSON. Looks like: audio=@device_cm_{GUID}\\\\wave_{GUID}",
+  "_voice_auto": "How auto decides: it takes your language from Claude Code's `language` setting, or the OS locale if that is unset. If Claude Code can dictate that language it picks \"gui\"; if not (Chinese, Thai…) it picks \"local\". If local's dependencies are missing it falls back to \"gui\" and says so in the log — it never fails silently. Check agent-deck.log under %LOCALAPPDATA%\\agent-deck to see what it chose and why.",
 
-  "_voice_whisper": "whisperBin/whisperModel: paths to an existing whisper.cpp build — machine-specific, detected by install.ps1. large-v3-turbo is a good speed/quality balance for Chinese. `threads` matters: whisper defaults to 4 no matter how many cores you have.",
+  "_voice_device": "local mode only. ffmpeg dshow device, detected automatically. To find it yourself: `ffmpeg -list_devices true -f dshow -i dummy`. PREFER the @device_cm_ GUID over the friendly name: friendly names are often non-ASCII and get mangled crossing shell boundaries. The backslash must be escaped as \\\\ in JSON. Looks like: audio=@device_cm_{GUID}\\\\wave_{GUID}",
+
+  "_voice_whisper": "local mode only. Paths to an existing whisper.cpp build, detected automatically from ~/whisper.cpp. large-v3-turbo is a good speed/quality balance for Chinese. `threads` matters: whisper defaults to 4 no matter how many cores you have.",
 
   "_voice_autoSubmit": "true sends the prompt straight after pasting. false leaves it in the composer so you can read it first — recommended, since STT gets names and code terms wrong.",
 
   "_voice_key": "cli mode only. SendKeys syntax, must match voice:pushToTalk. Space = \"{SPACE}\"; ctrl+shift+v = \"^+v\".",
 
   "voice": {
-    "mode": "local",
+    "mode": "auto",
     "device": null,
     "whisperBin": null,
     "whisperModel": null,
-    "language": "zh",
+    "language": null,
     "threads": 8,
     "autoSubmit": false,
     "maxSeconds": 120,
