@@ -1,8 +1,8 @@
-# AKP03 Agent Deck
+# Claude Code Deck
 
 *English ｜ [繁體中文](README.zh-TW.md)*
 
-Turn a cheap Ajazz AKP03 macro pad into a physical control surface for Claude Code.
+A physical control surface for Claude Code on Windows. Built on a cheap Ajazz AKP03, but **any OpenDeck-supported device works** — nothing in the plugin is device-specific.
 
 Not "buttons that run macros". This moves the **permission prompt off the screen and under your thumb**: before Claude runs `Bash`, the tool name and the command appear on the key face, `✓` and `✗` light up, and the agent waits. The key you press *is* the hook's return value.
 
@@ -36,9 +36,11 @@ finding the same answer separately is usually a sign the answer is right.
 So why this one:
 
 - **Windows.** agentsd is macOS-only; Windows is listed as a future enhancement.
-- **A ~$30 macro pad, not a ~$150 Stream Deck.** The AKP03 speaks the Mirabox N3
-  protocol, not Elgato's, so it needs [opendeck-akp03](https://github.com/4ndv/opendeck-akp03)
-  underneath — whose author calls Windows support "untested". It works.
+- **Runs on a ~$30 macro pad, not just a ~$150 Stream Deck.** The AKP03 speaks the
+  Mirabox N3 protocol, not Elgato's, so it needs
+  [opendeck-akp03](https://github.com/4ndv/opendeck-akp03) underneath — whose
+  author calls Windows support "untested". It works. A Stream Deck works too;
+  this plugin doesn't care what the device is.
 - **Chinese dictation.** Claude Code's built-in dictation rejects `zh-CN`
   outright, so this records with ffmpeg and transcribes locally with whisper.cpp.
 - **It drives the Desktop app's UI.** Model, permission mode, usage, fork,
@@ -99,11 +101,20 @@ Deleting `com.hovell.agentdeck` costs more than the keys: **OpenDeck nulls out a
 
 ## Install
 
+### What it actually needs
+
+| | |
+|---|---|
+| **Windows** | Non-negotiable. It drives Claude Code Desktop through Windows UI Automation |
+| **Claude Code Desktop** | Not the CLI — the keys read and operate the app's accessibility tree |
+| **Node.js 22+** | The plugin is JavaScript, not a compiled binary. `run.cmd` says so in the log if it's missing |
+| **A Claude.ai account** | For Claude Code's own dictation |
+| **Any OpenDeck device** | An AKP03 is what this was built and tested on, but the plugin never names a device. 6 keys and a knob is a comfortable fit |
+
 ### Prerequisites
 
 1. **OpenDeck** — https://github.com/nekename/OpenDeck/releases
-2. **opendeck-akp03** (the device driver) — https://github.com/4ndv/opendeck-akp03/releases
-   Unzip into `%APPDATA%\OpenDeck\plugins\`, then **launch OpenDeck once** so it creates the profiles and device id.
+2. **A device-support plugin for your hardware.** For an AKP03 or Mirabox N3: [opendeck-akp03](https://github.com/4ndv/opendeck-akp03/releases) — unzip into `%APPDATA%\OpenDeck\plugins\`. A Stream Deck needs nothing extra. Then **launch OpenDeck once** so it creates the profiles and device id.
 3. Node ≥ 22. Optional, for Chinese dictation: `ffmpeg` and a `whisper.cpp` build.
 
 ### Then, either

@@ -1,8 +1,8 @@
-# AKP03 Agent Deck
+# Claude Code Deck
 
 *[English](README.md) ｜ 繁體中文*
 
-把 Ajazz AKP03 變成 Claude Code 的實體協作面板。
+Claude Code 在 Windows 上的實體協作面板。用便宜的 Ajazz AKP03 做出來的，但 **任何 OpenDeck 支援的裝置都能用** —— plugin 裡沒有一行綁定特定硬體。
 
 不是「按鈕跑巨集」。是把 **permission prompt 從螢幕搬到實體鍵上**：Claude 要跑 `Bash` 之前，工具名和指令會印在鍵面上，`✓` 和 `✗` 亮起來，agent 停在那裡等你按。你按的那一下，就是那個 hook 的回傳值。
 
