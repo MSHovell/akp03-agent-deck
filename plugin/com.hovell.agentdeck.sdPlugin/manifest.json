@@ -2,7 +2,7 @@
   "SDKVersion": 2,
   "Author": "Hovell",
   "Name": "AKP03 Agent Deck",
-  "Description": "Turn an Ajazz AKP03 into a physical control surface for Claude Code on Windows: approve or reject tool calls with a real key, watch agent state on the key art, switch model and permission mode, dictate in Chinese. Windows only — the UI automation is built on Windows UI Automation.",
+  "Description": "Turn an Ajazz AKP03 into a physical control surface for Claude Code: approve or reject tool calls with a real key, watch agent state on the key art, switch model and permission mode, dictate, scroll the conversation with a knob. REQUIRES Node.js 22+ and Windows (the UI automation is built on Windows UI Automation). Dictation uses Claude Code's own; for languages it can't dictate — Chinese, Thai — it falls back to local transcription with ffmpeg + whisper.cpp, which stays on your machine.",
   "Version": "0.1.0",
   "Icon": "icons/category",
   "Category": "AKP03 Agent Deck",

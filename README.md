@@ -183,9 +183,24 @@ Put the hooks in the `.claude/settings.json` of the project that needs them, not
 
 ## Voice
 
-Three modes. Which one you want depends on **what language you speak**, because Claude Code's built-in dictation is English-only.
+**You shouldn't have to choose.** The plugin picks on first run and writes the answer to `config.json`:
 
-### `local` (default — the only one that speaks Chinese)
+```
+your language ── Claude Code can dictate it? ──yes──> "gui"   (nothing to install)
+   from its                 │
+`language` setting,         no
+ else the OS locale         │
+                            v
+                    ffmpeg + whisper.cpp present? ──yes──> "local"
+                            │
+                            no ──> "gui", and the log says what's missing
+```
+
+Your language comes from Claude Code's `language` setting, or the OS locale when that's unset — which matters more than it looks. This project's author had never set `language`, and he is the reason `local` exists; reading only the setting handed the one person who needed Chinese the English-only path, silently.
+
+Whatever it decides, `%LOCALAPPDATA%\agent-deck\agent-deck.log` says what and why. Override by editing `voice.mode` in `config.json`.
+
+### `local` (the only one that speaks Chinese)
 
 **Claude Code's dictation does not support Chinese.** Not a setting — the feature isn't there:
 
@@ -213,7 +228,7 @@ Three implementation traps:
 
 The key has three states, **all real, none guessed**: `VOICE` → `REC` (red) → `HEARING` (whisper working). That middle one matters: whisper takes seconds, and a key that goes dark reads as a dropped press.
 
-### `gui` (Claude Code Desktop's own dictation, English)
+### `gui` (Claude Code Desktop's own dictation — the common case)
 
 **The desktop app has no keyboard shortcut for the microphone.** The `Ctrl+/` list has no voice entry, the docs never mention one, and the CLI's `voice:pushToTalk` binding explicitly doesn't apply ("terminal-based interactive mode shortcuts do not apply in Desktop"). There is no key to send.
 

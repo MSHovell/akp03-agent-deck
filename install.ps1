@@ -234,9 +234,13 @@ if ($sd -or $sdRun) {
 
 Head 'Summary'
 Say ("  port          : {0}" -f $findings['port'])
-Say ("  microphone    : {0}" -f $(if ($findings['device_str']) { 'detected' } else { 'none — voice off' }))
-Say ("  whisper       : {0}" -f $(if ($findings['whisperBin']) { 'detected' } else { 'none — voice off' }))
+Say ("  microphone    : {0}" -f $(if ($findings['device_str']) { 'detected' } else { 'not found' }))
+Say ("  whisper       : {0}" -f $(if ($findings['whisperBin']) { 'detected' } else { 'not found' }))
 Say ("  plugin install: {0}" -f $(if ($Dev) { 'junction (dev)' } else { 'copy' }))
+Say ''
+Say '  Voice mode is decided by the plugin on first run, not here — it has to' DarkGray
+Say '  work for store installs that never run this script. The two findings above' DarkGray
+Say '  are shown so you know what it will find. Check agent-deck.log afterwards.' DarkGray
 
 if ($blockers.Count) {
   Write-Host ''
@@ -256,6 +260,12 @@ Head '6. Writing config.json'
 # Written by Node, NOT PowerShell. Set-Content -Encoding utf8 emits a BOM on
 # Windows PowerShell 5.1, JSON.parse chokes on it, and loadConfig's catch then
 # silently falls back to defaults — a config that looks applied but isn't.
+#
+# Only `port` is settled here. Everything about voice is left as "auto" for the
+# plugin to work out on first run (lib/detect.js), because it must do that anyway
+# for anyone who installs from the OpenDeck store and never sees this script.
+# Detecting it in both places would just let the two drift apart — and they did:
+# this file used to hardcode mode="local", language="zh".
 $cfgPath = Join-Path $SRC 'config.json'
 $payload = @{
   port = $findings['port']
@@ -263,14 +273,8 @@ $payload = @{
   gateTools = @('Bash', 'Write', 'Edit', 'NotebookEdit')
   claudeBin = 'claude'
   voice = @{
-    mode = 'local'
-    device = $findings['device_str']
-    whisperBin = $findings['whisperBin']
-    whisperModel = $findings['whisperModel']
-    language = 'zh'
-    threads = 8
+    mode = 'auto'
     autoSubmit = $false
-    maxSeconds = 120
     key = '{SPACE}'
   }
 } | ConvertTo-Json -Depth 5 -Compress
