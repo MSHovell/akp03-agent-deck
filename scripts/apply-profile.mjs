@@ -22,14 +22,32 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const PLUGIN_DIR = join(HERE, '..', 'plugin', 'com.hovell.agentdeck.sdPlugin');
+const SOURCE_DIR = join(HERE, '..', 'plugin', 'com.hovell.agentdeck.sdPlugin');
 const PLUGIN_ID = 'com.hovell.agentdeck';
 /** `action.plugin` carries the .sdPlugin suffix; the action UUIDs do not. */
 const PLUGIN_KEY = `${PLUGIN_ID}.sdPlugin`;
-const PROFILES = join(process.env.APPDATA ?? '', 'OpenDeck', 'profiles');
+const OPENDECK = join(process.env.APPDATA ?? '', 'OpenDeck');
+const PROFILES = join(OPENDECK, 'profiles');
+
+/**
+ * Where the plugin is INSTALLED — which is what the profile must point at, not
+ * wherever this repo happens to sit.
+ *
+ * Two reasons. The profile should survive the source tree being moved or
+ * deleted; and the install path is ASCII by construction, while a source path
+ * may not be. This repo lives in "AKP03專案", and OpenDeck could not load a
+ * single icon from it: the whole action list rendered as broken images. The
+ * install path under %APPDATA% has no such problem.
+ */
+const INSTALL_DIR = join(OPENDECK, 'plugins', PLUGIN_KEY);
 
 /** OpenDeck stores absolute, forward-slashed paths — not manifest-relative ones. */
-const abs = (rel) => join(PLUGIN_DIR, rel).replace(/\\/g, '/');
+const abs = (rel) => join(INSTALL_DIR, rel).replace(/\\/g, '/');
+
+// The manifest is read from the source (this repo is the source of truth for
+// what actions exist); only the paths written into the profile are rewritten to
+// point at the install.
+const PLUGIN_DIR = SOURCE_DIR;
 
 const manifest = JSON.parse(readFileSync(join(PLUGIN_DIR, 'manifest.json'), 'utf8'));
 const byUuid = new Map(manifest.Actions.map((a) => [a.UUID, a]));

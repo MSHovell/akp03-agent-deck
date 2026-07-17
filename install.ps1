@@ -322,6 +322,19 @@ if (Test-Path $dest) {
   if ($item.LinkType) { $item.Delete() } else { Remove-Item $dest -Recurse -Force }
 }
 if ($Dev) {
+  # A junction resolves to the source path, and OpenDeck's webview cannot load
+  # icons from a path with non-ASCII characters in it — the whole action list
+  # renders as broken images, while the files are demonstrably there. Copying
+  # into %APPDATA% sidesteps it because that path is ASCII by construction.
+  if ($SRC -notmatch '^[\x00-\x7F]*$') {
+    Warn 'This source path contains non-ASCII characters.'
+    Say "         $SRC" DarkGray
+    Say '         A -Dev junction points OpenDeck at that path, and its webview' DarkGray
+    Say '         cannot load icons from it — every action icon goes blank.' DarkGray
+    Say '         Move the repo to an ASCII path, or install without -Dev.' DarkGray
+    $ans = Read-Host '         Link anyway? [y/N]'
+    if ($ans -notmatch '^[Yy]') { Say '  Aborted.' Yellow; exit 1 }
+  }
   New-Item -ItemType Junction -Path $dest -Target $SRC | Out-Null
   Ok "junction -> $SRC"
 } else {

@@ -108,6 +108,7 @@ Claude Code ──PreToolUse hook (http)──> Agent Deck ──setImage──>
 | 鍵面空白 | `setImage` 的 SVG **必須 base64**。用 `charset=utf8,`+`encodeURIComponent` 會被原樣存成不合法 XML |
 | 旋鈕綁不上 | OpenDeck UI 不給綁 encoder — **直接寫 profile 繞過** |
 | 旋鈕行為衝突、轉一格兩邊都反應 | **官方 Stream Dock AJAZZ 在背景執行，跟 OpenDeck 搶同一台裝置**。它的 `switchAudio` 外掛預設把旋鈕綁音量。裝在 `Program Files (x86)`（不是 `Program Files`），且註冊在 `HKCU\...\Run` 開機自動啟動 |
+| **所有 action 圖示變破圖** | **路徑裡有非 ASCII 字元**（例如這個專案原本就放在 `AKP03專案` 底下）。OpenDeck 的 webview 載不動 —— 但檔案是在的，Node 讀得到。咬了兩次：`-Dev` 的 junction 指向中文路徑、以及 profile 寫進了原始碼路徑而非安裝路徑。**plugin 放 `%APPDATA%` 底下**（那是純 ASCII）|
 | 文件說 `Ctrl+Shift+I` 開 model 選單 | **實際開了無痕對話，還把視窗帶離 Code 分頁**。桌面版的快捷鍵只在 Code 分頁成立，焦點不對時同一個組合鍵是別的功能。所以選單一律走 UIA，不送快捷鍵 |
 
 ## 先跑跑看，不用硬體

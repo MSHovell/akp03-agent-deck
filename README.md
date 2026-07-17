@@ -109,6 +109,7 @@ Every one of these was hit, diagnosed, and fixed here. They share a shape: **the
 | Docs say `Ctrl+Shift+I` opens the model menu | **It opened an incognito Chat and navigated the window off the Code tab.** Desktop shortcuts only hold in the Code tab; the same chord means something else elsewhere. Hence: menus via UIA, never blind keystrokes |
 | A knob "does nothing" | `Expand()` on an already-expanded menu throws `InvalidOperationException` — and a knob fires ticks faster than a script runs. Make it idempotent |
 | Number keys don't reach dialogs | A CJK IME rewrites them: `2` arrives as `ㄉ` |
+| **Every action icon is a broken image** | **A non-ASCII character anywhere in the path.** OpenDeck's webview can't load icons from it — though the files are demonstrably there, and Node reads them fine. Bit us twice: a `-Dev` junction pointing at such a source, and profile paths written from the source rather than the install. Keep the plugin under `%APPDATA%` (ASCII by construction) |
 
 And the one that made all the others harder to find: **PowerShell wrote its errors in the OEM code page** while Node read them as UTF-8, so every localised .NET exception arrived as mojibake. I stared at `嚙瘡 "0" 嚙豬數呼嚙編 "Expand"` and guessed wrong. Fixing the encoding surfaced the real message immediately.
 
