@@ -16,6 +16,28 @@ Claude Code ──PreToolUse hook (http)──> Agent Deck ──setImage──>
                                         Claude 繼續跑
 ```
 
+## 前人的東西，以及這個有什麼不同
+
+**這個點子不是獨創的。** 已經有好幾個專案把 Claude Code 搬到 deck 上，其中至少一個**獨立想到了一模一樣的架構**：
+
+| 專案 | 硬體 | 平台 |
+|---|---|---|
+| [agentsd](https://github.com/paultyng/agentsd) | Stream Deck | **僅 macOS** |
+| [cc-streamdeck](https://github.com/alt-core/cc-streamdeck) | Stream Deck Mini | — |
+| [AgentDeck](https://github.com/puritysb/AgentDeck) | Stream Deck+、Android、iOS、ESP32、TUI | — |
+| [terminaldeck](https://github.com/sidmohan0/terminaldeck) | Stream Deck | — |
+
+**agentsd 的核心設計跟這個完全相同**：hook 撐住 HTTP 回應最多 120 秒，讓實體鍵決定。連 action 清單都幾乎重疊 —— Session、Status、Mode、Approve、Deny、Stop。兩個人各自想到同一個答案，通常代表那是對的答案。
+
+那這個存在的理由：
+
+- **Windows。** agentsd 只有 macOS，Windows 列在 future enhancement。
+- **約 30 鎂的巨集鍵盤，不是 150 鎂的 Stream Deck。** AKP03 講的是 Mirabox N3 協定不是 Elgato 的，所以底下要墊 [opendeck-akp03](https://github.com/4ndv/opendeck-akp03) —— 而那個作者說 Windows 支援「未經測試」。實測是通的。
+- **中文聽寫。** Claude Code 內建的聽寫直接拒絕 `zh-CN`，所以這裡用 ffmpeg 錄音 + whisper.cpp 本機轉寫。
+- **它會操作桌面版的 UI。** 模型、權限模式、使用量、fork、archive、對話捲動 —— 全部透過無障礙樹讀取與操作，不只走 hook。
+
+**你如果有 Stream Deck 又用 Mac，去用 agentsd。** 那個成熟得多。
+
 ## 為什麼這能成立
 
 三個查證過的事實撐起整個設計：

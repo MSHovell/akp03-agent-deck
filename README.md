@@ -16,6 +16,37 @@ Claude Code ──PreToolUse hook (http)──> Agent Deck ──setImage──>
                                      Claude carries on
 ```
 
+## Prior art, and where this differs
+
+This idea is not original. Several projects put Claude Code on a deck, and at
+least one arrived at the identical architecture independently:
+
+| Project | Hardware | Platform |
+|---|---|---|
+| [agentsd](https://github.com/paultyng/agentsd) | Stream Deck | **macOS only** |
+| [cc-streamdeck](https://github.com/alt-core/cc-streamdeck) | Stream Deck Mini | — |
+| [AgentDeck](https://github.com/puritysb/AgentDeck) | Stream Deck+, Android, iOS, ESP32, TUI | — |
+| [terminaldeck](https://github.com/sidmohan0/terminaldeck) | Stream Deck | — |
+
+**agentsd reached the same core design on its own**: a hook holds the HTTP
+response open for up to 120 seconds while a physical key decides. Its action list
+overlaps almost exactly — Session, Status, Mode, Approve, Deny, Stop. Two people
+finding the same answer separately is usually a sign the answer is right.
+
+So why this one:
+
+- **Windows.** agentsd is macOS-only; Windows is listed as a future enhancement.
+- **A ~$30 macro pad, not a ~$150 Stream Deck.** The AKP03 speaks the Mirabox N3
+  protocol, not Elgato's, so it needs [opendeck-akp03](https://github.com/4ndv/opendeck-akp03)
+  underneath — whose author calls Windows support "untested". It works.
+- **Chinese dictation.** Claude Code's built-in dictation rejects `zh-CN`
+  outright, so this records with ffmpeg and transcribes locally with whisper.cpp.
+- **It drives the Desktop app's UI.** Model, permission mode, usage, fork,
+  archive, transcript scrolling — read and operated through the accessibility
+  tree, not just hooks.
+
+If you have a Stream Deck on a Mac, use agentsd. It is further along.
+
 ## Why this works at all
 
 Three verified facts hold the whole design up:
