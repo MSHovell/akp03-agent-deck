@@ -1,0 +1,35 @@
+# Live config — machine-specific: mic GUID, whisper paths, port.
+# Ships as config.example.json instead; install.ps1 generates this one.
+config.json
+
+# Logs. These carry VOICE TRANSCRIPTS and the commands Claude was about to run,
+# in plaintext. Never publish them.
+*.log
+
+# apply-profile.mjs backs up the OpenDeck profile before overwriting it.
+*.bak
+*.bak-*
+
+# Recorded dictation, and whatever whisper leaves behind.
+*.wav
+
+# Claude Code's per-machine settings. Harmless today, but this file exists to
+# accumulate local permission rules — which grow into lists of real paths and
+# commands. The ".local" in the name is the point.
+.claude/settings.local.json
+
+# Personal tooling: kept locally for convenience, not part of the project.
+# Reads credentials from a hardcoded path on one machine.
+scripts/publish-manual.mjs
+
+# A machine-state undo file written on one specific PC. Double-clicking it adds
+# an autostart entry to HKCU\...\Run — not something to hand a stranger.
+docs/restore-streamdock-autostart.reg
+
+# Zero npm dependencies, but keep this honest anyway.
+node_modules/
+package-lock.json
+
+# Scratch
+*.tmp
+/tmp/

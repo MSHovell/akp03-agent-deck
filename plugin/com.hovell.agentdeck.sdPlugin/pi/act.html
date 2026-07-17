@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Session Action</title>
+    <style>
+      body { font: 13px/1.5 "Segoe UI", system-ui, sans-serif; color: #d8d8d8; background: #2d2d2d; padding: 12px; }
+      label { display: block; margin: 12px 0 4px; color: #969696; }
+      input, select { width: 100%; box-sizing: border-box; background: #3d3d3d;
+        border: 1px solid #4d4d4d; border-radius: 4px; color: #eee; padding: 6px; font: inherit; }
+      .hint { color: #7a7a7a; font-size: 11px; margin-top: 6px; }
+    </style>
+  </head>
+  <body>
+    <label for="act">Key does</label>
+    <select id="act">
+      <option value="mode-cycle">Mode — press to cycle Manual → Edits → Plan → Auto → Bypass</option>
+      <option value="fork">Fork — branch this session</option>
+      <option value="archive">Archive — file this session away</option>
+    </select>
+
+    <label for="label">Label</label>
+    <input id="label" placeholder="defaults to the action name" />
+
+    <div class="hint">
+      All three drive Claude's own menus through the accessibility tree, not
+      keyboard shortcuts — so they can't wander somewhere you didn't ask for.
+      <br /><br />
+      <b>Mode</b> shows the current mode and tints itself: green for Manual, red
+      for Bypass. It reads the real value, so it stays right even if you change
+      mode in the app.
+      <br /><br />
+      <b>Archive</b> needs two presses. It sits one item away from Delete in the
+      same menu, and these keys have no screen to warn you.
+    </div>
+
+    <script>
+      let ws, ctx;
+      const fields = ['act', 'label'];
+
+      function connectElgatoStreamDeckSocket(port, uuid, registerEvent, _info, actionInfo) {
+        ctx = uuid;
+        ws = new WebSocket('ws://127.0.0.1:' + port);
+        const settings = JSON.parse(actionInfo).payload.settings ?? {};
+        ws.onopen = () => {
+          ws.send(JSON.stringify({ event: registerEvent, uuid }));
+          document.getElementById('act').value = settings.act ?? 'mode-cycle';
+          document.getElementById('label').value = settings.label ?? '';
+        };
+      }
+
+      function save() {
+        if (!ws) return;
+        const payload = {};
+        for (const f of fields) payload[f] = document.getElementById(f).value;
+        ws.send(JSON.stringify({ event: 'setSettings', context: ctx, payload }));
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        for (const f of fields) document.getElementById(f).addEventListener('change', save);
+      });
+    </script>
+  </body>
+</html>

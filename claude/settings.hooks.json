@@ -1,0 +1,43 @@
+{
+  "//": [
+    "Merge this into .claude/settings.json — either your project's or ~/.claude/settings.json.",
+    "",
+    "TIMEOUT CONTRACT: the PreToolUse timeout below (120s) MUST stay larger than",
+    "approvalTimeoutMs in the plugin's config.json (90s). The plugin has to be the",
+    "one that gives up first — that way it answers 'defer' and you get the normal",
+    "on-screen prompt. If Claude Code times out first you get a hook error instead.",
+    "",
+    "The matcher must also stay in sync with gateTools in config.json. The matcher",
+    "decides what gets sent; gateTools decides what actually lights the deck."
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:9317/hook/pretooluse",
+            "timeout": 120,
+            "statusMessage": "Waiting for the AKP03…"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [{ "type": "http", "url": "http://127.0.0.1:9317/hook/userpromptsubmit", "timeout": 5 }]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [{ "type": "http", "url": "http://127.0.0.1:9317/hook/notification", "timeout": 5 }]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [{ "type": "http", "url": "http://127.0.0.1:9317/hook/stop", "timeout": 5 }]
+      }
+    ]
+  }
+}

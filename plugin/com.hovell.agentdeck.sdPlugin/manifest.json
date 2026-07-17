@@ -1,0 +1,141 @@
+{
+  "SDKVersion": 2,
+  "Author": "Hovell",
+  "Name": "Agent Deck",
+  "Description": "Turn an Ajazz AKP03 into a physical control surface for Claude Code: approve or reject tool calls with a real key, watch agent state on the key art, dispatch prompts, scrub diffs with the knobs.",
+  "Version": "0.1.0",
+  "Icon": "icons/category",
+  "Category": "Agent Deck",
+  "CategoryIcon": "icons/category",
+  "URL": "https://github.com/MSHovell/akp03-agent-deck",
+  "Software": { "MinimumVersion": "6.0" },
+  "OS": [
+    { "Platform": "windows", "MinimumVersion": "10" },
+    { "Platform": "mac", "MinimumVersion": "10.15" }
+  ],
+  "Nodejs": { "Version": "20" },
+  "CodePath": "run.sh",
+  "CodePathWin": "run.cmd",
+  "Actions": [
+    {
+      "UUID": "com.hovell.agentdeck.status",
+      "Name": "Status / Send",
+      "Icon": "icons/status",
+      "Tooltip": "Shows what Claude is doing, and sends the composer when pressed.",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": false,
+      "States": [{ "Image": "icons/status-key", "TitleAlignment": "bottom", "ShowTitle": false }]
+    },
+    {
+      "UUID": "com.hovell.agentdeck.usage",
+      "Name": "Usage",
+      "Icon": "icons/usage",
+      "Tooltip": "Context and plan usage as two rings. Press to open the usage panel.",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": false,
+      "States": [{ "Image": "icons/usage-key", "ShowTitle": false }]
+    },
+    {
+      "UUID": "com.hovell.agentdeck.approve",
+      "Name": "Approve",
+      "Icon": "icons/approve",
+      "Tooltip": "Approve the tool call Claude Code is waiting on. Dark unless something is pending.",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": false,
+      "States": [{ "Image": "icons/approve-key", "ShowTitle": false }]
+    },
+    {
+      "UUID": "com.hovell.agentdeck.deny",
+      "Name": "Deny",
+      "Icon": "icons/deny",
+      "Tooltip": "Reject the pending tool call.",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": false,
+      "States": [{ "Image": "icons/deny-key", "ShowTitle": false }]
+    },
+    {
+      "UUID": "com.hovell.agentdeck.interrupt",
+      "Name": "Interrupt",
+      "Icon": "icons/interrupt",
+      "Tooltip": "Stop the agent. Unblocks a pending approval, otherwise sends Escape.",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": false,
+      "States": [{ "Image": "icons/interrupt-key", "ShowTitle": false }]
+    },
+    {
+      "UUID": "com.hovell.agentdeck.voice",
+      "Name": "Push to Talk",
+      "Icon": "icons/voice",
+      "Tooltip": "Hold to dictate a prompt. Requires an STT backend in config.json.",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": false,
+      "States": [{ "Image": "icons/voice-key", "ShowTitle": false }]
+    },
+    {
+      "UUID": "com.hovell.agentdeck.dispatch",
+      "Name": "Dispatch Prompt",
+      "Icon": "icons/dispatch",
+      "Tooltip": "Fire a saved prompt or slash command at a headless Claude Code run.",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": true,
+      "PropertyInspectorPath": "pi/dispatch.html",
+      "States": [{ "Image": "icons/dispatch-key", "ShowTitle": false }]
+    },
+    {
+      "UUID": "com.hovell.agentdeck.send",
+      "Name": "Send",
+      "Icon": "icons/send",
+      "Tooltip": "Send whatever is in the composer. Pairs with dictation: read the transcript, then commit it.",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": false,
+      "States": [{ "Image": "icons/send-key", "ShowTitle": false }]
+    },
+    {
+      "UUID": "com.hovell.agentdeck.act",
+      "Name": "Session Action",
+      "Icon": "icons/act",
+      "Tooltip": "Cycle permission mode, fork the session, or archive it.",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": false,
+      "PropertyInspectorPath": "pi/act.html",
+      "States": [{ "Image": "icons/act-key", "ShowTitle": false }]
+    },
+    {
+      "UUID": "com.hovell.agentdeck.keycap",
+      "Name": "Keycap",
+      "Icon": "icons/keycap",
+      "Tooltip": "A blank key: pick a face from the library, bind it to a prompt.",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": true,
+      "PropertyInspectorPath": "pi/keycap.html",
+      "States": [{ "Image": "icons/keycap-key", "ShowTitle": false }]
+    },
+    {
+      "UUID": "com.hovell.agentdeck.session",
+      "Name": "Session",
+      "Icon": "icons/session",
+      "Tooltip": "Shows how many Claude Code sessions are reporting in.",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": false,
+      "States": [{ "Image": "icons/session-key", "ShowTitle": false }]
+    },
+    {
+      "UUID": "com.hovell.agentdeck.dial",
+      "Name": "Agent Dial",
+      "Icon": "icons/dial",
+      "Tooltip": "Knob: scrub diffs, switch sessions, or pick effort level.",
+      "Controllers": ["Encoder"],
+      "SupportedInMultiActions": false,
+      "PropertyInspectorPath": "pi/dial.html",
+      "Encoder": {
+        "layout": "$B1",
+        "TriggerDescription": {
+          "Rotate": "Scrub",
+          "Push": "Select",
+          "Touch": "Select"
+        }
+      },
+      "States": [{ "Image": "icons/dial-key", "ShowTitle": false }]
+    }
+  ]
+}

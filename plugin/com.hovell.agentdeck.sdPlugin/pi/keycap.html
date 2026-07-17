@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Keycap</title>
+    <style>
+      body { font: 13px/1.5 "Segoe UI", system-ui, sans-serif; color: #d8d8d8; background: #2d2d2d; padding: 12px; }
+      label { display: block; margin: 12px 0 4px; color: #969696; }
+      input, textarea, select { width: 100%; box-sizing: border-box; background: #3d3d3d;
+        border: 1px solid #4d4d4d; border-radius: 4px; color: #eee; padding: 6px; font: inherit; }
+      textarea { min-height: 60px; resize: vertical; }
+      .hint { color: #7a7a7a; font-size: 11px; margin-top: 4px; }
+      .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 4px; }
+      .cap { background: #1b1b1e; border: 2px solid transparent; border-radius: 7px;
+        padding: 5px 2px 3px; cursor: pointer; text-align: center; }
+      .cap:hover { border-color: #4d4d4d; }
+      .cap.on { border-color: #7aa2f7; background: #23283a; }
+      .cap svg { width: 26px; height: 26px; display: block; margin: 0 auto; }
+      .cap span { font-size: 8px; color: #8a8a92; letter-spacing: .02em; }
+      .row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+      .row input[type=checkbox] { width: auto; }
+    </style>
+  </head>
+  <body>
+    <label>Face</label>
+    <div class="grid" id="grid"></div>
+
+    <label for="label">Label</label>
+    <input id="label" placeholder="defaults to the face name" />
+
+    <label for="prompt">Prompt</label>
+    <textarea id="prompt" placeholder="/code-review high"></textarea>
+    <div class="hint">Typed into the composer of the session you're looking at — not a separate headless run.</div>
+
+    <div class="row">
+      <input type="checkbox" id="send" checked />
+      <label for="send" style="margin:0">Send it immediately</label>
+    </div>
+    <div class="hint">Uncheck to drop the text in the composer and let you edit first.</div>
+
+    <script type="module">
+      // The library is the single source of truth for the faces; importing it
+      // means this picker can never drift out of sync with what the deck draws.
+      import { CAPS, CAP_NAMES } from "../lib/keycaps.js";
+
+      let ws, ctx;
+      const settings = { cap: "EMPTY", label: "", prompt: "", send: true };
+
+      const grid = document.getElementById("grid");
+      for (const name of CAP_NAMES) {
+        const el = document.createElement("div");
+        el.className = "cap";
+        el.dataset.cap = name;
+        el.innerHTML =
+          `<svg viewBox="-32 -32 64 64">${CAPS[name]("#e9e9ee")}</svg><span>${name}</span>`;
+        el.onclick = () => {
+          settings.cap = name;
+          paint();
+          save();
+        };
+        grid.appendChild(el);
+      }
+
+      function paint() {
+        for (const el of grid.children) el.classList.toggle("on", el.dataset.cap === settings.cap);
+      }
+
+      function save() {
+        settings.label = document.getElementById("label").value;
+        settings.prompt = document.getElementById("prompt").value;
+        settings.send = document.getElementById("send").checked;
+        ws?.send(JSON.stringify({ event: "setSettings", context: ctx, payload: settings }));
+      }
+
+      for (const id of ["label", "prompt", "send"]) {
+        document.getElementById(id).addEventListener("change", save);
+      }
+
+      globalThis.connectElgatoStreamDeckSocket = (port, uuid, registerEvent, _info, actionInfo) => {
+        ctx = uuid;
+        ws = new WebSocket("ws://127.0.0.1:" + port);
+        Object.assign(settings, JSON.parse(actionInfo).payload.settings ?? {});
+        ws.onopen = () => {
+          ws.send(JSON.stringify({ event: registerEvent, uuid }));
+          document.getElementById("label").value = settings.label ?? "";
+          document.getElementById("prompt").value = settings.prompt ?? "";
+          document.getElementById("send").checked = settings.send !== false;
+          paint();
+        };
+      };
+
+      paint();
+    </script>
+  </body>
+</html>

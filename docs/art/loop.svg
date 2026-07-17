@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="290" viewBox="0 0 720 290">
+    <defs><marker id="a" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <path d="M0 0 L8 3 L0 6 z" fill="#4a4a52"/></marker></defs>
+    <rect width="100%" height="100%" fill="#0f0f11"/><text x="24" y="28" font-family="Segoe UI, Inter, sans-serif" font-size="15"
+    font-weight="600" fill="#e9e9ee" text-anchor="start">實體按鍵如何決定工具跑不跑</text><rect x="24" y="56" width="170" height="52" rx="9" fill="#1b1b1e" stroke="#3a3a40" stroke-width="2"/><text x="109" y="79" font-family="Segoe UI, Inter, sans-serif" font-size="12"
+    font-weight="400" fill="#e9e9ee" text-anchor="middle">Claude Code</text><text x="109" y="96" font-family="Segoe UI, Inter, sans-serif" font-size="11"
+    font-weight="400" fill="#8a8a92" text-anchor="middle">要跑 Bash</text><rect x="250" y="56" width="190" height="52" rx="9" fill="#1d2433" stroke="#7aa2f7" stroke-width="2"/><text x="345" y="79" font-family="Segoe UI, Inter, sans-serif" font-size="12"
+    font-weight="400" fill="#7aa2f7" text-anchor="middle">PreToolUse hook</text><text x="345" y="96" font-family="Segoe UI, Inter, sans-serif" font-size="11"
+    font-weight="400" fill="#8a8a92" text-anchor="middle">POST → :9317</text><rect x="500" y="56" width="190" height="52" rx="9" fill="#3a2a12" stroke="#e0af68" stroke-width="2"/><text x="595" y="79" font-family="Segoe UI, Inter, sans-serif" font-size="12"
+    font-weight="400" fill="#e0af68" text-anchor="middle">Agent Deck</text><text x="595" y="96" font-family="Segoe UI, Inter, sans-serif" font-size="11"
+    font-weight="400" fill="#8a8a92" text-anchor="middle">agent 停下來等</text><rect x="500" y="150" width="190" height="62" rx="9" fill="#14301c" stroke="#7ad07a" stroke-width="2"/><text x="595" y="174" font-family="Segoe UI, Inter, sans-serif" font-size="13"
+    font-weight="600" fill="#7ad07a" text-anchor="middle">你按下 ✓</text><text x="595" y="194" font-family="Segoe UI, Inter, sans-serif" font-size="11"
+    font-weight="400" fill="#8a8a92" text-anchor="middle">指令印在鍵面上</text><rect x="24" y="150" width="400" height="62" rx="9" fill="#1b1b1e" stroke="#3a3a40" stroke-width="2"/><text x="224" y="176" font-family="Segoe UI, Inter, sans-serif" font-size="12"
+    font-weight="400" fill="#7ad07a" text-anchor="middle">{"permissionDecision": "allow"}</text><text x="224" y="196" font-family="Segoe UI, Inter, sans-serif" font-size="11"
+    font-weight="400" fill="#8a8a92" text-anchor="middle">Claude 繼續跑 — 你按的那一下就是回傳值</text><path d="M196 82 L246 82" stroke="#4a4a52" stroke-width="2" marker-end="url(#a)"/><path d="M442 82 L496 82" stroke="#4a4a52" stroke-width="2" marker-end="url(#a)"/><path d="M595 110 L595 146" stroke="#4a4a52" stroke-width="2" marker-end="url(#a)"/><path d="M498 181 L430 181" stroke="#4a4a52" stroke-width="2" marker-end="url(#a)"/><text x="24" y="252" font-family="Segoe UI, Inter, sans-serif" font-size="11"
+    font-weight="400" fill="#8a8a92" text-anchor="start">關鍵：agent 問，你答。這條路完全不碰畫面 —— 走的是 hook，不是 UI 自動化。</text><text x="24" y="272" font-family="Segoe UI, Inter, sans-serif" font-size="11"
+    font-weight="400" fill="#8a8a92" text-anchor="start">所有失敗路徑都回 defer：裝置沒插、plugin 崩了、逾時 → 交還給螢幕上的權限提示。</text></svg>

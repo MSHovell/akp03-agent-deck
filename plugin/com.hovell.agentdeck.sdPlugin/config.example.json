@@ -1,0 +1,38 @@
+{
+  "_comment": "The shape of config.json. You do NOT need to fill this in by hand — install.ps1 detects everything below and writes config.json for you. Copy this only if you want to configure it manually.",
+
+  "_null_fields": "device / whisperBin / whisperModel are null because they are different on every machine. The plugin refuses to use them until they are set, rather than guessing.",
+
+  "_port": "Must match the hook URLs in .claude/settings.json. Avoid 8787 — WSL's port relay commonly squats on it.",
+  "port": 9317,
+
+  "_approvalTimeoutMs": "How long a key may stay lit waiting for you. MUST be lower than the hook timeout in .claude/settings.json, or Claude Code gives up first and you get no fallback prompt.",
+  "approvalTimeoutMs": 90000,
+
+  "_gateTools": "Tools that require a physical key press. Everything else follows the normal permission flow. Start narrow — gating Read would light the deck constantly.",
+  "gateTools": ["Bash", "Write", "Edit", "NotebookEdit"],
+
+  "claudeBin": "claude",
+
+  "_voice_mode": "\"local\" = ffmpeg records, whisper.cpp transcribes, the text is pasted into the composer. THE ONLY MODE THAT SPEAKS CHINESE — Claude Code's built-in dictation is English-only and rejects zh-CN outright. Audio never leaves the machine. || \"gui\" = Claude Code Desktop's own dictation button, toggled via UI Automation (lib/mic.ps1); the desktop app has NO keyboard shortcut for the mic. English only. || \"cli\" = terminal Claude Code: taps `key` at the focused window, needs /voice tap. English only.",
+
+  "_voice_device": "ffmpeg dshow device — machine-specific, detected by install.ps1. To find it yourself: `ffmpeg -list_devices true -f dshow -i dummy`. PREFER the @device_cm_ GUID over the friendly name: friendly names are often non-ASCII and get mangled crossing shell boundaries. The backslash must be escaped as \\\\ in JSON. Looks like: audio=@device_cm_{GUID}\\\\wave_{GUID}",
+
+  "_voice_whisper": "whisperBin/whisperModel: paths to an existing whisper.cpp build — machine-specific, detected by install.ps1. large-v3-turbo is a good speed/quality balance for Chinese. `threads` matters: whisper defaults to 4 no matter how many cores you have.",
+
+  "_voice_autoSubmit": "true sends the prompt straight after pasting. false leaves it in the composer so you can read it first — recommended, since STT gets names and code terms wrong.",
+
+  "_voice_key": "cli mode only. SendKeys syntax, must match voice:pushToTalk. Space = \"{SPACE}\"; ctrl+shift+v = \"^+v\".",
+
+  "voice": {
+    "mode": "local",
+    "device": null,
+    "whisperBin": null,
+    "whisperModel": null,
+    "language": "zh",
+    "threads": 8,
+    "autoSubmit": false,
+    "maxSeconds": 120,
+    "key": "{SPACE}"
+  }
+}

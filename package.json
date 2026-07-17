@@ -1,0 +1,40 @@
+{
+  "name": "akp03-agent-deck",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Ajazz AKP03 as a physical control surface for Claude Code",
+  "keywords": [
+    "claude-code",
+    "stream-deck",
+    "opendeck",
+    "ajazz",
+    "akp03",
+    "mirabox",
+    "macro-pad"
+  ],
+  "homepage": "https://github.com/MSHovell/akp03-agent-deck#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MSHovell/akp03-agent-deck.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MSHovell/akp03-agent-deck/issues"
+  },
+  "author": "Hovell",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "os": [
+    "win32"
+  ],
+  "scripts": {
+    "test": "node --test tests/loop.test.mjs",
+    "install-deck": "powershell -ExecutionPolicy Bypass -File install.ps1",
+    "icons": "node scripts/gen-icons.mjs",
+    "profile": "node scripts/apply-profile.mjs",
+    "console": "node scripts/dev-console.mjs",
+    "detect": "powershell -ExecutionPolicy Bypass -File scripts/detect-device.ps1"
+  }
+}

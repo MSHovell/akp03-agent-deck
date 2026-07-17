@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Agent Dial</title>
+    <style>
+      body { font: 13px/1.5 "Segoe UI", system-ui, sans-serif; color: #d8d8d8; background: #2d2d2d; padding: 12px; }
+      label { display: block; margin: 12px 0 4px; color: #969696; }
+      select { width: 100%; background: #3d3d3d; border: 1px solid #4d4d4d; border-radius: 4px;
+        color: #eee; padding: 6px; font: inherit; }
+      .hint { color: #7a7a7a; font-size: 11px; margin-top: 6px; }
+    </style>
+  </head>
+  <body>
+    <label for="mode">Knob does</label>
+    <select id="mode">
+      <option value="menu">Menu — turn to move, press to choose (any open dialog)</option>
+      <option value="model">Model — turn to open, press to pick</option>
+      <option value="mode">Mode — permission mode</option>
+      <option value="effort">Effort — Smarter ↔ Faster</option>
+      <option value="session">Session — next / previous session</option>
+      <option value="diff">Scroll — Up/Down in the focused pane</option>
+    </select>
+    <div class="hint">
+      Keep Claude Code in front — these act on the focused window.
+      <br /><br />
+      <b>Model / Mode / Effort</b> open their menu through the accessibility
+      tree, not keyboard shortcuts, and show the current value on the dial
+      without opening anything.
+      <br /><br />
+      <b>Menu</b> opens nothing at all; it just moves through whatever is already
+      on screen — a permission dialog, the / command list, a file picker.
+    </div>
+
+    <script>
+      let ws, ctx;
+
+      function connectElgatoStreamDeckSocket(port, uuid, registerEvent, _info, actionInfo) {
+        ctx = uuid;
+        ws = new WebSocket('ws://127.0.0.1:' + port);
+        const settings = JSON.parse(actionInfo).payload.settings ?? {};
+        ws.onopen = () => {
+          ws.send(JSON.stringify({ event: registerEvent, uuid }));
+          document.getElementById('mode').value = settings.mode ?? 'diff';
+        };
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('mode').addEventListener('change', (e) => {
+          ws?.send(JSON.stringify({ event: 'setSettings', context: ctx, payload: { mode: e.target.value } }));
+        });
+      });
+    </script>
+  </body>
+</html>
